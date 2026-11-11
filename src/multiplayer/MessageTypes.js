@@ -24,7 +24,12 @@ export const MSG = Object.freeze({
   // Creatures
   CREATURE_SPAWN:    'creature_spawn',
   CREATURE_STATE:    'creature_state',
+  CREATURE_HIT:      'creature_hit',
+  CREATURE_ATTACK:   'creature_attack',
   CREATURE_DESPAWN:  'creature_despawn',
+
+  // Gunfire / Combat
+  PLAYER_SHOT:       'player_shot',
 
   // Chat / signals
   CHAT:              'chat',

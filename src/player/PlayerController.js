@@ -10,9 +10,43 @@ export class PlayerController {
     this.stamina   = CONFIG.PLAYER.STAMINA_MAX;
     this._dir      = new THREE.Vector3();
     this._axis     = new THREE.Vector3(0, 1, 0);
+    this.radius    = 0.35;
   }
 
-  update(delta, input) {
+  resolveCollision(boxes) {
+    if (!boxes || !boxes.length) return;
+    const pos = this.player.body.position;
+    const R = this.radius;
+
+    // 2 iterations for smooth sliding around corners
+    for (let k = 0; k < 2; k++) {
+      for (const b of boxes) {
+        if (
+          pos.x < b.minX - R - 0.5 || pos.x > b.maxX + R + 0.5 ||
+          pos.z < b.minZ - R - 0.5 || pos.z > b.maxZ + R + 0.5
+        ) continue;
+
+        const px = Math.max(b.minX, Math.min(pos.x, b.maxX));
+        const pz = Math.max(b.minZ, Math.min(pos.z, b.maxZ));
+        const dx = pos.x - px;
+        const dz = pos.z - pz;
+        const d2 = dx * dx + dz * dz;
+
+        if (d2 < R * R) {
+          if (d2 > 1e-8) {
+            const d = Math.sqrt(d2);
+            const push = (R - d) / d;
+            pos.x += dx * push;
+            pos.z += dz * push;
+          } else {
+            pos.x += R;
+          }
+        }
+      }
+    }
+  }
+
+  update(delta, input, collisionBoxes = null) {
     const isSprinting = input.isKeyDown(KEYS.SPRINT) && this.stamina > 0;
     const speed = isSprinting ? CONFIG.PLAYER.SPRINT_SPEED : CONFIG.PLAYER.WALK_SPEED;
 
@@ -48,23 +82,22 @@ export class PlayerController {
       this.onGround    = false;
     }
 
-    // Apply movement (direct THREE position — Rapier slot left open)
-    if (this.player.rigidBody) {
-      this.player.rigidBody.setLinvel(
-        { x: this.velocity.x, y: this.velocity.y, z: this.velocity.z }, true
-      );
-    } else {
-      const pos = this.player.body.position;
-      pos.x += this.velocity.x * delta;
-      pos.y += this.velocity.y * delta;
-      pos.z += this.velocity.z * delta;
+    // Direct THREE position movement
+    const pos = this.player.body.position;
+    pos.x += this.velocity.x * delta;
+    pos.y += this.velocity.y * delta;
+    pos.z += this.velocity.z * delta;
 
-      // Simple floor
-      if (pos.y < CONFIG.PLAYER.HEIGHT) {
-        pos.y         = CONFIG.PLAYER.HEIGHT;
-        this.velocity.y = 0;
-        this.onGround   = true;
-      }
+    // Floor height clamp
+    if (pos.y < CONFIG.PLAYER.HEIGHT) {
+      pos.y         = CONFIG.PLAYER.HEIGHT;
+      this.velocity.y = 0;
+      this.onGround   = true;
+    }
+
+    // Solve wall collisions against procedural maze boxes
+    if (collisionBoxes) {
+      this.resolveCollision(collisionBoxes);
     }
 
     return isMoving;

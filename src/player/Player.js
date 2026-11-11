@@ -7,6 +7,7 @@ import { PlayerAnimation }  from './PlayerAnimation.js';
 import { HealthInsanity }   from './HealthInsanity.js';
 import { Flashlight }       from './Flashlight.js';
 import { Inventory }        from './Inventory.js';
+import { Weapon }           from './Weapon.js';
 import { KEYS }             from '../core/InputManager.js';
 
 export class Player {
@@ -28,11 +29,12 @@ export class Player {
 
     // Sub-systems
     this.cameraController = new PlayerCamera(this.camera);
-    this.cameraController.setBaseY(0);  // relative to body
+    this.cameraController.setBaseY(0);
 
     this.controller     = new PlayerController(this);
     this.healthInsanity = new HealthInsanity();
-    this.flashlight     = new Flashlight(this.camera);
+    this.flashlight     = new Flashlight(this.camera, modelData?.lanternModel?.scene);
+    this.weapon         = new Weapon(this.camera, modelData?.rifleModel?.scene);
     this.inventory      = new Inventory();
 
     // Character model (hidden locally — first-person)
@@ -53,6 +55,13 @@ export class Player {
 
     // Wire E key for interact
     game.inputManager.on(KEYS.INTERACT, ({ down }) => { if (down) this.interact(); });
+
+    // Left click / shoot
+    window.addEventListener('mousedown', (e) => {
+      if (e.button === 0 && game.inputManager.isPointerLocked) {
+        this.shoot();
+      }
+    });
   }
 
   update(delta) {
@@ -62,8 +71,9 @@ export class Player {
     const { x: dx, y: dy } = input.consumeMouseDelta();
     this.cameraController.applyMouseDelta(dx, dy);
 
-    // Movement
-    const isMoving = this.controller.update(delta, input);
+    // Movement with maze collision detection
+    const collisionBoxes = this.game.roomManager ? this.game.roomManager.getCollisionBoxes() : null;
+    const isMoving = this.controller.update(delta, input, collisionBoxes);
 
     // Rotate body by yaw (camera pitch done inside PlayerCamera)
     this.body.rotation.y = this.cameraController.yaw;
@@ -80,6 +90,7 @@ export class Player {
       this._flashlightKeyHeld = false;
     }
     this.flashlight.update(delta);
+    if (this.weapon) this.weapon.update(delta);
 
     // Health / insanity passive
     this.healthInsanity.update(delta);
@@ -108,6 +119,16 @@ export class Player {
     } else {
       if (this._interactPrompt) this._interactPrompt.style.display = 'none';
       this._nearInteractable = null;
+    }
+  }
+
+  shoot() {
+    if (!this.weapon) return;
+    const targets = this.game.creatureManager ? this.game.creatureManager.getHitscanTargets() : [];
+    const hit = this.weapon.shoot(this._raycaster, targets);
+
+    if (hit && this.game.creatureManager) {
+      this.game.creatureManager.handleHitscan(hit.object);
     }
   }
 

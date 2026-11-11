@@ -49,6 +49,7 @@ async function bootstrap() {
   lobbyUI.init();
 
   const playerSync = new PlayerSync(game, networkManager, game.sceneManager);
+  game.playerSync = playerSync;
   const worldSync = new WorldSync(networkManager);
 
   const debug = new Debug(game);
@@ -108,22 +109,78 @@ async function bootstrap() {
   });
 
   // Game start transition
-  const startGameSession = async () => {
+  const startGameSession = async ({ seed = Date.now() } = {}) => {
     lobbyUI.hide();
     mainMenuEl.style.display = 'none';
     charSelectEl.style.display = 'none';
 
-    // Spawn local player
-    const charModel = await game.assetManager.loadGLB('assets/models/players/character_01.glb');
+    // 1. Build procedural maze synchronously from seed
+    const mazeData = game.buildMaze(seed);
+
+    // 2. Spawn local player with character model, held lantern, and starting rifle
+    const [charModel, lanternModel, rifleModel] = await Promise.all([
+      game.assetManager.loadGLB('assets/models/players/character_01.glb'),
+      game.assetManager.loadGLB('assets/models/items/Lantern.glb'),
+      game.assetManager.loadGLB('assets/models/items/Rifle.glb')
+    ]);
+
+    charModel.lanternModel = lanternModel;
+    charModel.rifleModel = rifleModel;
     game.player = new Player(game, charModel);
+
+    // Set starting position at maze entrance (slightly offset for multiplayer spawns)
+    if (mazeData && mazeData.start) {
+      const mySlot = networkManager.isHost ? 0 : 1;
+      const offsets = [[0, 0], [1.2, 0], [0, 1.2], [1.2, 1.2]];
+      const off = offsets[mySlot % 4];
+      game.player.body.position.set(
+        mazeData.start.x + off[0],
+        CONFIG.PLAYER.HEIGHT,
+        mazeData.start.z + off[1]
+      );
+    }
+
+    // Wire item interactions (Pickups)
+    EventBus.on('interact', ({ object }) => {
+      if (object?.userData) {
+        const { id, type } = object.userData;
+        if (type === 'ammo') {
+          game.player.weapon.addAmmo(6);
+          game.roomManager.removePickup(id);
+          const prompt = document.getElementById('interaction-prompt');
+          if (prompt) {
+            prompt.textContent = '+6 RIFLE AMMO';
+            setTimeout(() => { if (prompt.textContent === '+6 RIFLE AMMO') prompt.style.display = 'none'; }, 1500);
+          }
+        } else if (type === 'battery') {
+          game.player.flashlight.battery = Math.min(
+            CONFIG.VISION.FLASHLIGHT_BATTERY_MAX,
+            game.player.flashlight.battery + 45
+          );
+          game.roomManager.removePickup(id);
+          const prompt = document.getElementById('interaction-prompt');
+          if (prompt) {
+            prompt.textContent = '+45% BATTERY';
+            setTimeout(() => { if (prompt.textContent === '+45% BATTERY') prompt.style.display = 'none'; }, 1500);
+          }
+        } else if (type === 'saxophone') {
+          game.roomManager.removePickup(id);
+          const prompt = document.getElementById('interaction-prompt');
+          if (prompt) {
+            prompt.textContent = 'YOU FOUND THE SAXOPHONE';
+            setTimeout(() => { if (prompt.textContent === 'YOU FOUND THE SAXOPHONE') prompt.style.display = 'none'; }, 2000);
+          }
+        }
+      }
+    });
 
     // Request pointer lock for first-person controls
     game.inputManager.requestPointerLock();
     game.setState('playing');
   };
 
-  EventBus.on('lobby:gameStart', () => {
-    startGameSession();
+  EventBus.on('lobby:gameStart', ({ seed }) => {
+    startGameSession({ seed });
   });
 
   // Ready!

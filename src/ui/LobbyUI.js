@@ -1,5 +1,4 @@
 import EventBus from '../core/EventBus.js';
-import { MSG }  from '../multiplayer/MessageTypes.js';
 
 export class LobbyUI {
   constructor(networkManager, lobbyManager) {
@@ -18,43 +17,60 @@ export class LobbyUI {
 
   init() {
     this._startBtn?.addEventListener('click', () => {
-      if (this.net.isHost) this.lobby.startGame();
+      if (this.net.isHost) {
+        this.lobby.startGame();
+      }
     });
 
     this._leaveBtn?.addEventListener('click', () => {
       this.net.disconnect();
       this.hide();
-      document.getElementById('main-menu').style.display = 'flex';
+      const mm = document.getElementById('main-menu');
+      if (mm) mm.style.display = 'flex';
     });
 
     this._joinBtn?.addEventListener('click', () => {
-      const code = this._joinInput?.value.trim();
-      if (code) EventBus.emit('lobby:joinRequest', { code });
+      const code = this._joinInput?.value.trim().toUpperCase();
+      if (code) {
+        EventBus.emit('lobby:joinRequest', { code });
+      }
+    });
+
+    // Enter key support on join input
+    this._joinInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const code = this._joinInput.value.trim().toUpperCase();
+        if (code) EventBus.emit('lobby:joinRequest', { code });
+      }
     });
 
     EventBus.on('network:ready', ({ roomCode, isHost }) => {
-      if (this._codeEl) this._codeEl.textContent = isHost
-        ? `Room Code: ${roomCode}`
-        : 'Connected!';
-      if (this._startBtn) this._startBtn.style.display = isHost ? 'block' : 'none';
-      if (this._joinForm) this._joinForm.style.display = isHost ? 'none' : 'none';
+      if (this._codeEl) {
+        this._codeEl.textContent = isHost
+          ? `Room Code: ${roomCode}`
+          : `Joined Room: ${roomCode}`;
+      }
+      if (this._startBtn) {
+        this._startBtn.style.display = isHost ? 'block' : 'none';
+      }
+      if (this._joinForm) {
+        this._joinForm.style.display = 'none';
+      }
     });
 
-    EventBus.on('lobby:playerList', ({ players }) => this._renderPlayerList(players));
+    EventBus.on('network:hostLost', () => {
+      alert('The host has disconnected. Returning to main menu.');
+      this.hide();
+      const mm = document.getElementById('main-menu');
+      if (mm) mm.style.display = 'flex';
+    });
   }
 
-  _renderPlayerList(players) {
-    if (!this._playerList) return;
-    this._playerList.innerHTML = '';
-    for (const player of players) {
-      const li = document.createElement('li');
-      li.className = 'player-entry';
-      li.textContent = player.name ?? player.id ?? 'Unknown';
-      if (player.ready) li.classList.add('ready');
-      this._playerList.appendChild(li);
-    }
+  show() {
+    if (this._screen) this._screen.style.display = 'flex';
   }
 
-  show() { if (this._screen) this._screen.style.display = 'flex'; }
-  hide() { if (this._screen) this._screen.style.display = 'none'; }
+  hide() {
+    if (this._screen) this._screen.style.display = 'none';
+  }
 }

@@ -11,7 +11,12 @@ export class AssetManager {
   }
 
   async init() {
-    const essential = [...CONFIG.ASSETS.PLAYER_MODELS];
+    const essential = [
+      ...CONFIG.ASSETS.PLAYER_MODELS,
+      CONFIG.ASSETS.ITEMS.lantern,
+      CONFIG.ASSETS.ITEMS.rifle,
+      CONFIG.ASSETS.ITEMS.saxophone
+    ];
     this._preloadTotal = essential.length;
     await this.preloadList(essential);
   }
