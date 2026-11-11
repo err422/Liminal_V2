@@ -1,0 +1,330 @@
+:root {
+  --color-bg:       #0a0a0a;
+  --color-surface:  #111111;
+  --color-accent:   #c8a96e;
+  --color-danger:   #8b1a1a;
+  --color-text:     #d4d0c8;
+  --color-muted:    #666666;
+  --color-health:   #4a7c59;
+  --color-insanity: #8b1a1a;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Courier New', Courier, monospace;
+  overflow: hidden;
+}
+
+/* ── Canvas ── */
+#game-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 0;
+  display: block;
+}
+
+/* ── Shared overlay base ── */
+#loading-screen,
+#main-menu,
+#character-select,
+#lobby-ui {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 10, 0.96);
+  backdrop-filter: blur(3px);
+}
+
+#loading-screen { z-index: 100; }
+#main-menu      { z-index: 50;  }
+#character-select { z-index: 50; flex-direction: row; align-items: stretch; justify-content: flex-start; }
+#lobby-ui       { z-index: 50;  }
+
+/* ── Typography ── */
+h1 {
+  font-size: 3.5rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-shadow: 0 0 30px rgba(200,169,110,0.4), 0 0 60px rgba(200,169,110,0.1);
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 1.1rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 1.5rem;
+}
+
+.tagline {
+  color: var(--color-muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 2.5rem;
+  max-width: 480px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ── Buttons ── */
+button {
+  background: transparent;
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  padding: 10px 28px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+button:hover  { background: var(--color-accent); color: #000; }
+button:active { opacity: 0.8; }
+
+/* ── Loading screen ── */
+#loading-bar {
+  width: 300px;
+  height: 3px;
+  background: #222;
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 1.2rem 0 0.8rem;
+}
+
+#loading-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--color-accent);
+  transition: width 0.3s ease;
+}
+
+#loading-status {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  letter-spacing: 0.15em;
+}
+
+/* ── Main menu buttons ── */
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  width: 240px;
+}
+
+/* ── Character select ── */
+#char-preview-panel {
+  flex: 0 0 55%;
+  position: relative;
+  background: #090909;
+  border-right: 1px solid #1a1a1a;
+}
+
+#char-preview-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#char-select-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1.5rem;
+  overflow-y: auto;
+}
+
+#character-cards {
+  flex: 1;
+  margin-bottom: 1rem;
+}
+
+.character-card {
+  border: 1px solid #2a2a2a;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.character-card:hover   { border-color: #444; }
+.character-card.selected {
+  border-color: var(--color-accent);
+  background: rgba(200,169,110,0.08);
+}
+
+.char-name {
+  font-size: 0.95rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.char-desc {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+/* ── Lobby ── */
+#lobby-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  min-width: 320px;
+}
+
+#room-code-display {
+  font-size: 1.2rem;
+  letter-spacing: 0.3em;
+  color: var(--color-accent);
+  border: 1px solid #2a2a2a;
+  padding: 12px 24px;
+}
+
+#player-list {
+  width: 100%;
+  min-height: 80px;
+}
+
+.lobby-player {
+  padding: 6px 0;
+  border-bottom: 1px solid #1a1a1a;
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+.lobby-buttons {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+}
+
+.lobby-buttons button { margin: 0; }
+
+#join-form {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+#room-code-input {
+  flex: 1;
+  background: #111;
+  border: 1px solid #333;
+  color: var(--color-text);
+  padding: 8px 12px;
+  font-family: monospace;
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  outline: none;
+}
+
+#room-code-input:focus { border-color: var(--color-accent); }
+
+#join-form button { flex: 0 0 auto; width: auto; margin: 0; }
+
+/* ── HUD ── */
+#hud {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 20;
+  pointer-events: none;
+  padding: 0 1.5rem 1.2rem;
+}
+
+#hud-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#health-insanity-bar-container {
+  display: flex;
+  width: 38vw;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid #2a2a2a;
+  background: #0a0a0a;
+}
+
+#health-segment {
+  background: var(--color-health);
+  flex: 100;
+  transition: flex 0.4s ease;
+}
+
+#insanity-segment {
+  background: var(--color-insanity);
+  flex: 0;
+  transition: flex 0.4s ease;
+}
+
+#flashlight-battery {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+}
+
+#battery-track {
+  width: 70px;
+  height: 5px;
+  background: #222;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+#battery-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--color-accent);
+  transition: width 0.3s;
+}
+
+/* ── Interaction prompt ── */
+#interaction-prompt {
+  position: fixed;
+  top: 60%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.75);
+  border: 1px solid #444;
+  color: var(--color-text);
+  font-family: monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  padding: 6px 14px;
+  z-index: 25;
+  pointer-events: none;
+}
+
+/* ── Crosshair ── */
+body::after {
+  content: '';
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px; height: 4px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 50%;
+  z-index: 15;
+  pointer-events: none;
+}

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LIMINAL</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <!-- Globals loaded before modules -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+
+  <!-- Loading screen -->
+  <div id="loading-screen">
+    <h1>LIMINAL</h1>
+    <div id="loading-bar"><div id="loading-bar-fill"></div></div>
+    <p id="loading-status">Initializing...</p>
+  </div>
+
+  <!-- Main menu -->
+  <div id="main-menu" style="display:none">
+    <h1>LIMINAL</h1>
+    <p class="tagline">"You know you came here with three friends. So why are there four of you?"</p>
+    <div class="menu-buttons">
+      <button id="btn-create-lobby">CREATE GAME</button>
+      <button id="btn-join-lobby">JOIN GAME</button>
+      <button id="btn-settings">SETTINGS</button>
+    </div>
+  </div>
+
+  <!-- Character select -->
+  <div id="character-select" style="display:none">
+    <div id="char-preview-panel">
+      <canvas id="char-preview-canvas"></canvas>
+    </div>
+    <div id="char-select-right">
+      <h2>SELECT SURVIVOR</h2>
+      <div id="character-cards"></div>
+      <button id="btn-confirm-character">ENTER THE MAZE</button>
+    </div>
+  </div>
+
+  <!-- Lobby -->
+  <div id="lobby-ui" style="display:none">
+    <div id="lobby-inner">
+      <div id="room-code-display">Room Code: —</div>
+      <div id="player-list"></div>
+      <div class="lobby-buttons">
+        <button id="btn-start-game" style="display:none">START</button>
+        <button id="btn-leave-lobby">LEAVE</button>
+      </div>
+      <div id="join-form">
+        <input id="room-code-input" type="text" placeholder="Enter room code…" maxlength="24" />
+        <button id="btn-join-room">JOIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" style="display:none">
+    <div id="hud-bottom">
+      <div id="health-insanity-bar-container">
+        <div id="health-segment"></div>
+        <div id="insanity-segment"></div>
+      </div>
+      <div id="flashlight-battery">
+        <span>🔦</span>
+        <div id="battery-track"><div id="battery-fill"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interaction prompt -->
+  <div id="interaction-prompt" style="display:none">Press E to interact</div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
